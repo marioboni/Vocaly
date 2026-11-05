@@ -8,12 +8,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..900&display=swap">
 <style>
-  /* Layout: coluna única, estilo vídeo de treino vocal. Palco azul-marinho com notas à esquerda,
-     alvos como retângulos arredondados (altura = margem de acerto), barra de progresso e pílula de status dourada. */
+  /* Layout: tela única sem rolagem. Cabeçalho, resumo do exercício (abre os ajustes), palco com alvos retangulares
+     (altura = margem de acerto), medidor, faixa de status e barra de ações fixa embaixo.
+     Ajustes, editor de exercício e histórico são telas cheias. */
   :root {
     --bg: #050f1c; --navy: #0a2a50; --navy-hi: #0d3a6e;
     --green: #5dff8a; --mid: #ffd23f; --bad: #ff5c5c; --gold: #b8913a; --amber: #ffb454;
-    --text: #eaf3fc; --muted: #7f9bb8; --line: rgba(127,155,184,.22);
+    --text: #eaf3fc; --muted: #7f9bb8; --line: rgba(127,155,184,.22); --panel: #0a1a2c;
     --tol: 30;
     --font: 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     color-scheme: dark;
@@ -22,36 +23,33 @@
   [hidden] { display: none !important; }
   html { background: var(--bg); }
   body { margin: 0; min-height: 100dvh; background: var(--bg); color: var(--text); font: 500 15px/1.35 var(--font);
-         max-width: 560px; margin-inline: auto; display: flex; flex-direction: column; gap: 12px;
-         padding-block: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-bottom));
+         max-width: 560px; margin-inline: auto; display: flex; flex-direction: column; gap: 10px;
+         padding-top: max(10px, env(safe-area-inset-top));
          padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
   button, select, input { font: inherit; color: inherit; }
   button { cursor: pointer; border: 0; border-radius: 999px; padding: 11px 18px; font-weight: 800; letter-spacing: .02em; }
+  button:disabled { opacity: .45; cursor: default; }
   button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
   .primary { background: var(--green); color: #04230f; }
   .ghost { background: transparent; border: 1px solid var(--line); color: var(--text); }
   .primary.cancel { background: #ff7a7a; color: #2a0505; }
 
-  header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
   .brand { font-size: 12px; letter-spacing: .3em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
-  .lvl { width: 110px; height: 5px; border-radius: 5px; background: rgba(255,255,255,.1); margin-top: 7px; overflow: hidden; }
+  .lvl { width: 110px; height: 5px; border-radius: 5px; background: rgba(255,255,255,.1); margin-top: 6px; overflow: hidden; }
   .lvl i { display: block; height: 100%; width: 0; background: var(--green); }
-  .lvlcap { font-size: 9px; letter-spacing: .14em; color: var(--muted); margin-top: 3px; }
   #micBtn { padding: 8px 16px; font-size: 14px; }
 
-  .title { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-  .kicker { font-size: 11px; letter-spacing: .5em; padding-left: .5em; color: var(--muted); font-weight: 700; }
-  .vowel { font-size: 76px; line-height: 1; font-weight: 900; font-stretch: 90%; }
-  .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); margin-top: 4px; }
-  .chips { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; justify-content: center; }
-  .chips button { min-width: 50px; height: 36px; padding: 0 12px; background: rgba(255,255,255,.06); color: var(--muted); font-size: 14px; }
-  .chips button[aria-pressed="true"] { background: var(--green); color: #04230f; }
+  .summary { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; text-align: left;
+             background: rgba(255,255,255,.05); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-weight: 700; font-size: 14px; letter-spacing: 0; }
+  .summary span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .summary .gear { color: var(--muted); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; flex: none; }
 
-  .stage { position: relative; height: clamp(250px, 38dvh, 440px); border-radius: 16px; overflow: hidden; border: 1px solid var(--line);
+  .stage { position: relative; flex: 1 1 auto; min-height: 250px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line);
            background: radial-gradient(130% 90% at 50% 105%, var(--navy-hi) 0%, var(--navy) 48%, #071a33 100%); }
   #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .syl { position: absolute; top: 8px; right: 12px; font-size: 30px; font-weight: 900; font-stretch: 90%; color: rgba(234,243,252,.5); pointer-events: none; letter-spacing: .02em; }
   #msg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px; color: var(--muted); }
-  #msg[hidden], #report[hidden] { display: none; }
 
   .progress { visibility: hidden; padding-inline: 4px; }
   .progress.on { visibility: visible; }
@@ -61,7 +59,7 @@
   #fill { height: 100%; width: 0; background: var(--green); box-shadow: 0 0 10px var(--green); }
 
   .meter { display: grid; grid-template-columns: 64px 1fr 56px; align-items: center; gap: 12px; }
-  #noteBig { font-size: 34px; font-weight: 900; text-align: center; font-variant-numeric: tabular-nums; }
+  #noteBig { font-size: 30px; font-weight: 900; text-align: center; font-variant-numeric: tabular-nums; }
   .gauge { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; font-size: 9px; letter-spacing: .12em; color: var(--muted); font-weight: 700; }
   .gtrack { position: relative; height: 8px; border-radius: 8px; background: rgba(255,255,255,.1); }
   .gtrack i { position: absolute; left: 50%; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: rgba(255,255,255,.4); }
@@ -72,27 +70,55 @@
   #centsTxt { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--muted); }
   #centsTxt.ok { color: var(--green); } #centsTxt.off { color: var(--amber); }
 
-  .pill { border: 1.5px solid var(--gold); border-radius: 18px; background: #0f1623; padding: 10px 14px; text-align: center; min-height: 62px; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
-  #pillMain { font-weight: 900; font-size: 16px; letter-spacing: .02em; text-transform: uppercase; }
-  #pillSub { font-size: 11px; letter-spacing: .2em; color: var(--gold); font-weight: 700; text-transform: uppercase; }
+  .pill { position: absolute; top: 8px; left: 48px; right: 84px; z-index: 2; border: 1.5px solid var(--gold); border-radius: 10px; background: rgba(15,22,35,.9); padding: 6px 10px;
+          display: flex; justify-content: flex-start; align-items: baseline; gap: 10px; white-space: nowrap; overflow: hidden; visibility: hidden; pointer-events: none; }
+  #pillMain { font-weight: 900; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; }
+  #pillSub { font-size: 10px; letter-spacing: .14em; color: var(--gold); font-weight: 700; text-transform: uppercase; }
 
-  .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .controls label { display: flex; flex-direction: column; gap: 4px; font-size: 10px; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; font-weight: 700; min-width: 0; }
+  .bar { position: sticky; bottom: 0; z-index: 5; background: var(--bg); padding-top: 8px; padding-bottom: max(12px, env(safe-area-inset-bottom));
+         display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 8px; }
+  .bar button { padding: 13px 8px; font-size: 14px; }
+
+  /* telas cheias */
+  .sheet { position: fixed; inset: 0; z-index: 20; background: var(--bg); overflow-y: auto;
+           padding-block: max(14px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-bottom));
+           padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+  #editor { z-index: 30; }
+  .sheet-in { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+  .sh-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .sh-top h2 { margin: 0; font-size: 12px; letter-spacing: .3em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  .sh-top button { padding: 9px 16px; font-size: 14px; }
+  .cap { font-size: 10px; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; font-weight: 700; }
+
+  .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .controls label, .field { display: flex; flex-direction: column; gap: 4px; font-size: 10px; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; font-weight: 700; min-width: 0; }
   .controls .wide { grid-column: 1 / -1; }
-  .controls .end { display: flex; align-items: flex-end; }
-  .controls .end button { width: 100%; padding-block: 10px; font-size: 14px; }
-  select { width: 100%; background: #0c1c2e; border: 1px solid var(--line); border-radius: 10px; padding: 10px; font-size: 15px; font-weight: 600; text-transform: none; letter-spacing: 0; }
-  .check { flex-direction: row !important; align-items: center; gap: 10px !important; font-size: 12px !important; letter-spacing: .04em !important; text-transform: none !important; color: var(--text) !important; }
-  .check input { width: 20px; height: 20px; accent-color: var(--green); }
-  .actions { grid-column: 1 / -1; display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; }
+  select, input[type="text"] { width: 100%; background: #0c1c2e; border: 1px solid var(--line); border-radius: 10px; padding: 11px 10px; font-size: 15px; font-weight: 600; text-transform: none; letter-spacing: 0; }
+  .check { flex-direction: row !important; align-items: center; gap: 10px !important; font-size: 13px !important; letter-spacing: .02em !important; text-transform: none !important; color: var(--text) !important; }
+  .check input { width: 20px; height: 20px; accent-color: var(--green); flex: none; }
+  .pair { display: flex; gap: 10px; }
+  .pair button { flex: 1; padding-block: 10px; font-size: 14px; }
+  .chips { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .chips button { min-width: 54px; height: 38px; padding: 0 14px; background: rgba(255,255,255,.06); color: var(--muted); font-size: 14px; }
+  .chips button[aria-pressed="true"] { background: var(--green); color: #04230f; }
 
-  #report { position: absolute; inset: 0; overflow-y: auto; background: rgba(5,15,28,.95); padding: 16px; display: flex; flex-direction: column; gap: 14px; }
-  .rep-head { display: flex; align-items: center; gap: 16px; }
-  .ring { --p: 0; width: 84px; height: 84px; flex: none; border-radius: 50%; display: grid; place-items: center;
+  .ed-row { display: grid; grid-template-columns: 20px 1fr 96px 38px; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .ed-n { color: var(--muted); font-weight: 800; font-size: 13px; text-align: center; }
+  .ed-row select { padding: 10px 8px; font-size: 14px; }
+  .ed-row button { padding: 0; width: 38px; height: 38px; }
+
+  /* relatório */
+  #report { position: absolute; inset: 0; z-index: 3; background: #06111f; display: flex; flex-direction: column; }
+  .rep-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 14px 14px 6px; display: flex; flex-direction: column; gap: 12px; }
+  .rep-head { display: flex; align-items: center; gap: 14px; }
+  .ring { --p: 0; width: 64px; height: 64px; flex: none; border-radius: 50%; display: grid; place-items: center;
           background: conic-gradient(var(--green) calc(var(--p) * 1%), rgba(255,255,255,.1) 0); }
-  .ring span { width: 66px; height: 66px; border-radius: 50%; background: #071a33; display: grid; place-items: center; font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; }
-  #repTitle { font-size: 20px; font-weight: 900; }
-  #repSub { color: var(--muted); font-size: 13px; }
+  .ring span { width: 50px; height: 50px; border-radius: 50%; background: #071a33; display: grid; place-items: center; font-size: 17px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  #repTitle { font-size: 18px; font-weight: 900; }
+  #repSub { color: var(--muted); font-size: 12px; }
+  .map { display: block; width: 100%; height: 118px; border-radius: 12px; background: rgba(255,255,255,.04); flex: none; }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; color: var(--muted); font-weight: 700; letter-spacing: .04em; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
   .row { display: grid; grid-template-columns: 54px 1fr; gap: 4px 12px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
   .row .nm { font-size: 20px; font-weight: 900; }
   .row .st { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
@@ -101,27 +127,20 @@
   .dev { grid-column: 2; position: relative; height: 6px; border-radius: 6px; background: rgba(255,255,255,.1); }
   .dev::before { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; background: rgba(255,255,255,.4); }
   .dev u { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: var(--green); }
-  .dev u.off { background: var(--amber); } .dev u.none { display: none; }
-  .rep-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-bottom: 4px; }
-  .rep-actions .full { grid-column: 1 / -1; }
-  .rep-actions button:disabled { opacity: .7; cursor: default; }
-  .map { display: block; width: 100%; height: 118px; border-radius: 12px; background: rgba(255,255,255,.04); flex: none; }
-  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; color: var(--muted); font-weight: 700; letter-spacing: .05em; }
-  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
-  .pair { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .pair button { padding-block: 10px; font-size: 14px; }
+  .dev u.none { display: none; }
+  .rep-actions { flex: none; padding: 8px 14px 12px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; border-top: 1px solid var(--line); background: rgba(5,15,28,.98); }
+  .rep-actions button { padding: 11px 6px; font-size: 13px; }
+  .rep-actions .a { grid-column: span 3; } .rep-actions .b { grid-column: span 2; }
 
-  #history { position: fixed; inset: 0; z-index: 20; background: var(--bg); overflow-y: auto;
-             padding-block: max(14px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-bottom));
-             padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
-  .h-in { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
-  .h-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-  .h-top h2 { margin: 0; font-size: 12px; letter-spacing: .3em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  /* histórico */
+  .h-actions { display: flex; gap: 10px; }
+  .h-actions button { flex: 1; padding-block: 10px; font-size: 14px; }
+  #hMsg { color: var(--muted); font-size: 12px; min-height: 16px; }
   .h-stats { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
   .h-stats b { color: var(--text); font-weight: 800; font-variant-numeric: tabular-nums; }
   #spark { display: block; width: 100%; height: 96px; border-radius: 12px; background: rgba(255,255,255,.04); }
   #hList { display: flex; flex-direction: column; gap: 12px; }
-  .h-item { border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; background: #0a1a2c; }
+  .h-item { border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; background: var(--panel); }
   .h-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
   .h-head > div:first-child { min-width: 0; }
   .h-title { font-weight: 800; font-size: 14px; }
@@ -129,52 +148,46 @@
   .h-score { font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .h-score small { font-size: 12px; margin-left: 6px; font-weight: 800; }
   .h-item .map { height: 92px; }
-  .h-foot { display: flex; justify-content: flex-end; }
+  .h-foot { display: flex; justify-content: flex-end; gap: 8px; }
   .h-foot button { padding: 6px 12px; font-size: 12px; }
   .h-empty { color: var(--muted); text-align: center; padding: 28px 8px; }
   @media (prefers-reduced-motion: reduce) { #needle { transition: none; } }
 </style>
 </head>
 <body>
-<header>
+<header class="top">
   <div>
     <div class="brand">Afinador Vocal</div>
     <div class="lvl" aria-hidden="true"><i id="lvl"></i></div>
-    <div class="lvlcap">MIC</div>
   </div>
   <button id="micBtn" class="primary" type="button">Iniciar microfone</button>
 </header>
 
-<section class="title">
-  <div class="kicker" id="kicker">CANTE NA SÍLABA</div>
-  <div class="vowel" id="vowel">LÁ</div>
-  <div class="dot"></div>
-  <div class="chips" id="chips" role="group" aria-label="Som de referência e sílaba">
-    <button type="button" data-syl="la" aria-pressed="true">LÁ</button>
-    <button type="button" data-syl="vi" aria-pressed="false">VI</button>
-    <button type="button" data-syl="ta" aria-pressed="false">TÁ</button>
-    <button type="button" data-syl="mm" aria-pressed="false">MMM</button>
-    <button type="button" data-syl="bip" aria-pressed="false">BIP</button>
-  </div>
-</section>
+<button class="summary" id="summary" type="button" aria-label="Abrir ajustes">
+  <span id="sumTxt"></span><span class="gear">Ajustes</span>
+</button>
 
 <div class="stage" id="stage">
   <canvas id="cv"></canvas>
-  <div id="msg">Toque em "Iniciar microfone" ou escolha um exercício.</div>
+  <div class="syl" id="vowel">LÁ</div>
+  <div class="pill" id="pill"><span id="pillMain"></span><span id="pillSub"></span></div>
+  <div id="msg">Toque em "Iniciar microfone" ou em "Ouvir e cantar".</div>
   <div id="report" hidden>
-    <div class="rep-head">
-      <div class="ring" id="ring"><span id="ringTxt">0</span></div>
-      <div><div id="repTitle"></div><div id="repSub"></div></div>
+    <div class="rep-scroll" id="repScroll">
+      <div class="rep-head">
+        <div class="ring" id="ring"><span id="ringTxt">0</span></div>
+        <div><div id="repTitle"></div><div id="repSub"></div></div>
+      </div>
+      <canvas id="repMap" class="map" aria-label="Mapa de acertos"></canvas>
+      <div class="legend"><span><i style="background:var(--green)"></i>Boa 70%+</span><span><i style="background:var(--mid)"></i>Média 40%+</span><span><i style="background:var(--bad)"></i>Errou</span><span><i style="background:var(--muted)"></i>Sem som</span></div>
+      <div id="repRows"></div>
     </div>
-    <canvas id="repMap" class="map" aria-label="Mapa de acertos"></canvas>
-    <div class="legend"><span><i style="background:var(--green)"></i>Boa 70%+</span><span><i style="background:var(--mid)"></i>Média 40%+</span><span><i style="background:var(--bad)"></i>Errou</span><span><i style="background:var(--muted)"></i>Sem som</span></div>
-    <div id="repRows"></div>
     <div class="rep-actions">
-      <button class="primary full" id="rSave" type="button">Salvar resultado</button>
-      <button class="ghost" id="rAgain" type="button">Tentar de novo</button>
-      <button class="ghost" id="rReplay" type="button">Ouvir de novo</button>
-      <button class="ghost" id="rUp" type="button">Subir meio tom</button>
-      <button class="ghost" id="rClose" type="button">Fechar</button>
+      <button class="primary a" id="rSave" type="button">Salvar resultado</button>
+      <button class="ghost a" id="rAgain" type="button">Tentar de novo</button>
+      <button class="ghost b" id="rReplay" type="button">Ouvir</button>
+      <button class="ghost b" id="rUp" type="button">+ ½ tom</button>
+      <button class="ghost b" id="rClose" type="button">Fechar</button>
     </div>
   </div>
 </div>
@@ -190,60 +203,81 @@
   <div id="centsTxt">–</div>
 </div>
 
-<div class="pill"><div id="pillMain">Toque para começar</div><div id="pillSub"></div></div>
+<nav class="bar">
+  <button class="primary" id="exBtn" type="button">Ouvir e cantar</button>
+  <button class="ghost" id="singBtn" type="button">Só cantar</button>
+  <button class="ghost" id="histBtn" type="button">Histórico</button>
+</nav>
 
-<section class="controls">
-  <label class="wide">Exercício
-    <select id="exSel">
-      <option value="nota">Uma nota só, sustentada</option>
-      <option value="nota3">Uma nota só, repetida 3 vezes</option>
-      <option value="quinta">Quinta: 1 – 5</option>
-      <option value="quintaV">Quinta, ida e volta: 1 – 5 – 1</option>
-      <option value="arpejo">Arpejo maior: 1 – 3 – 5 – 8</option>
-      <option value="cinco">Cinco notas, sobe e desce</option>
-      <option value="escala">Escala maior (uma oitava)</option>
-      <option value="oitava">Salto de oitava</option>
-    </select>
-  </label>
-  <label>Tom inicial <select id="rootSel"></select></label>
-  <label>Andamento
-    <select id="bpmSel">
-      <option value="50">Bem lento (50)</option>
-      <option value="60" selected>Lento (60)</option>
-      <option value="80">Médio (80)</option>
-      <option value="100">Rápido (100)</option>
-    </select>
-  </label>
-  <label>Margem de acerto
-    <select id="tolSel">
-      <option value="20">±20 cents</option>
-      <option value="30" selected>±30 cents</option>
-      <option value="40">±40 cents</option>
-      <option value="50">±50 cents</option>
-    </select>
-  </label>
-  <label>Sensibilidade do microfone
-    <select id="sensSel">
-      <option value="0.010">Normal</option>
-      <option value="0.005" selected>Alta (bom para murmúrio)</option>
-      <option value="0.0025">Muito alta</option>
-    </select>
-  </label>
-  <label class="check wide"><input type="checkbox" id="guideChk"> Tocar a referência junto, em volume baixo</label>
-  <label class="check wide"><input type="checkbox" id="anyOct" checked> Aceitar qualquer oitava</label>
-  <div class="actions">
-    <button class="primary" id="exBtn" type="button">Ouvir e cantar</button>
-    <button class="ghost" id="singBtn" type="button">Só cantar</button>
-  </div>
-  <div class="pair">
-    <button class="ghost" id="noteBtn" type="button">Ouvir nota inicial</button>
-    <button class="ghost" id="histBtn" type="button">Histórico</button>
+<section id="sheet" class="sheet" hidden aria-label="Ajustes">
+  <div class="sheet-in">
+    <div class="sh-top"><h2>Ajustes</h2><button class="primary" id="shClose" type="button">Concluir</button></div>
+    <div class="controls">
+      <label class="wide">Exercício <select id="exSel"></select></label>
+      <div class="pair wide"><button class="ghost" id="exNew" type="button">Criar exercício</button><button class="ghost" id="exEdit" type="button" hidden>Editar este</button></div>
+      <label>Tom inicial <select id="rootSel"></select></label>
+      <label>Andamento
+        <select id="bpmSel">
+          <option value="50">Bem lento (50)</option>
+          <option value="60" selected>Lento (60)</option>
+          <option value="80">Médio (80)</option>
+          <option value="100">Rápido (100)</option>
+        </select>
+      </label>
+      <label>Margem de acerto
+        <select id="tolSel">
+          <option value="20">±20 cents</option>
+          <option value="30" selected>±30 cents</option>
+          <option value="40">±40 cents</option>
+          <option value="50">±50 cents</option>
+        </select>
+      </label>
+      <label>Sensibilidade do microfone
+        <select id="sensSel">
+          <option value="0.010">Normal</option>
+          <option value="0.005" selected>Alta (murmúrio)</option>
+          <option value="0.0025">Muito alta</option>
+        </select>
+      </label>
+      <div class="wide">
+        <div class="cap">Som de referência</div>
+        <div class="chips" id="chips" role="group" aria-label="Som de referência">
+          <button type="button" data-syl="la" aria-pressed="true">LÁ</button>
+          <button type="button" data-syl="vi" aria-pressed="false">VI</button>
+          <button type="button" data-syl="ta" aria-pressed="false">TÁ</button>
+          <button type="button" data-syl="mm" aria-pressed="false">MMM</button>
+          <button type="button" data-syl="bip" aria-pressed="false">BIP</button>
+        </div>
+      </div>
+      <div class="wide"><button class="ghost" id="noteBtn" type="button" style="width:100%">Ouvir nota inicial</button></div>
+      <label class="check wide"><input type="checkbox" id="guideChk"> Tocar a referência junto, em volume baixo</label>
+      <label class="check wide"><input type="checkbox" id="anyOct" checked> Aceitar qualquer oitava</label>
+    </div>
   </div>
 </section>
 
-<section id="history" hidden aria-label="Histórico de tentativas">
-  <div class="h-in">
-    <div class="h-top"><h2>Histórico</h2><button class="ghost" id="hClose" type="button">Fechar</button></div>
+<section id="editor" class="sheet" hidden aria-label="Criar exercício">
+  <div class="sheet-in">
+    <div class="sh-top"><h2>Meu exercício</h2><button class="ghost" id="edCancel" type="button">Cancelar</button></div>
+    <label class="field">Nome <input id="edName" type="text" maxlength="40" placeholder="Ex.: Quinta e volta" autocomplete="off"></label>
+    <div class="cap" id="edCap"></div>
+    <div id="edSteps"></div>
+    <button class="ghost" id="edAdd" type="button">+ Adicionar nota</button>
+    <div class="h-meta" id="edInfo"></div>
+    <div class="pair"><button class="ghost" id="edPlay" type="button">Ouvir prévia</button><button class="primary" id="edSave" type="button">Salvar e usar</button></div>
+    <button class="ghost" id="edDel" type="button" hidden>Excluir exercício</button>
+  </div>
+</section>
+
+<section id="history" class="sheet" hidden aria-label="Histórico de tentativas">
+  <div class="sheet-in">
+    <div class="sh-top"><h2>Histórico</h2><button class="primary" id="hClose" type="button">Fechar</button></div>
+    <div class="h-actions">
+      <button class="ghost" id="hExport" type="button">Exportar</button>
+      <button class="ghost" id="hImport" type="button">Importar</button>
+      <input type="file" id="hFile" accept=".json,application/json" hidden>
+    </div>
+    <div id="hMsg" role="status"></div>
     <select id="hFilter" aria-label="Filtrar por exercício"></select>
     <div class="h-stats" id="hStats"></div>
     <canvas id="spark" aria-label="Evolução da pontuação"></canvas>
@@ -262,17 +296,24 @@
   const median = a => { const s = [...a].sort((x, y) => x - y); return s[s.length >> 1]; };
   const mean = a => a.reduce((x, y) => x + y, 0) / (a.length || 1);
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const SYL_NAME = { la: 'LÁ', vi: 'VI', ta: 'TÁ', mm: 'MMM', bip: 'BIP' };
 
-  // duração em tempos (beats)
+  // [semitons a partir do tom inicial, duração em tempos]
   const EXERCISES = {
-    nota:    { label: 'Uma nota só',            notes: [[0,4]] },
-    nota3:   { label: 'Uma nota, 3 vezes',      notes: [[0,2],[0,2],[0,2]] },
-    quinta:  { label: 'Quinta 1–5',             notes: [[0,2],[7,3]] },
-    quintaV: { label: 'Quinta 1–5–1',           notes: [[0,2],[7,2],[0,3]] },
-    arpejo:  { label: 'Arpejo maior',           notes: [[0,2],[4,2],[7,2],[12,3]] },
-    cinco:   { label: 'Cinco notas',            notes: [[0,1],[2,1],[4,1],[5,1],[7,1],[5,1],[4,1],[2,1],[0,2]] },
-    escala:  { label: 'Escala maior',           notes: [[0,1],[2,1],[4,1],[5,1],[7,1],[9,1],[11,1],[12,2]] },
-    oitava:  { label: 'Salto de oitava',        notes: [[0,2],[12,2],[0,2]] },
+    nota:    { label: 'Uma nota só',       opt: 'Uma nota só, sustentada',        notes: [[0,4]] },
+    nota3:   { label: 'Uma nota, 3 vezes', opt: 'Uma nota só, repetida 3 vezes',  notes: [[0,2],[0,2],[0,2]] },
+    quinta:  { label: 'Quinta 1–5',        opt: 'Quinta: 1 – 5',                  notes: [[0,2],[7,3]] },
+    quintaV: { label: 'Quinta 1–5–1',      opt: 'Quinta, ida e volta: 1 – 5 – 1', notes: [[0,2],[7,2],[0,3]] },
+    arpejo:  { label: 'Arpejo maior',      opt: 'Arpejo maior: 1 – 3 – 5 – 8',    notes: [[0,2],[4,2],[7,2],[12,3]] },
+    cinco:   { label: 'Cinco notas',       opt: 'Cinco notas, sobe e desce',      notes: [[0,1],[2,1],[4,1],[5,1],[7,1],[5,1],[4,1],[2,1],[0,2]] },
+    escala:  { label: 'Escala maior',      opt: 'Escala maior (uma oitava)',      notes: [[0,1],[2,1],[4,1],[5,1],[7,1],[9,1],[11,1],[12,2]] },
+    oitava:  { label: 'Salto de oitava',   opt: 'Salto de oitava',                notes: [[0,2],[12,2],[0,2]] },
+  };
+  let customs = [];   // exercícios criados pelo usuário: { id, name, notes }
+  const getEx = id => {
+    if (EXERCISES[id]) return EXERCISES[id];
+    const c = customs.find(x => x.id === id);
+    return c ? { label: c.name, notes: c.notes } : EXERCISES.arpejo;
   };
 
   const cv = $('cv'), ctx = cv.getContext('2d'), stage = $('stage');
@@ -283,11 +324,10 @@
   let micOn = false, raf = 0, syl = 'la';
   let phase = 'off';            // off | free | listen | count | sing
   let seq = null, beatMs = 1000, listenStart = 0, singStart = 0, tl = 0, muteUntil = 0;
-  let hist = [], recent = [], samples = [];
-  let center = 57, W = 0, H = 0, dpr = 1;
+  let hist = [], recent = [], samples = [], traceRaw = [], currentRec = null;
+  let center = 57, camC = null, W = 0, H = 0, dpr = 1;
   let dispM = null, shownNote = null, curCents = 0, lastVoiced = 0, lastUI = 0, lastM = null, lastDetect = 0;
   let lastExId = 'nota';
-  let traceRaw = [], currentRec = null;
   let TOL = 30, guideG = null;   // margem de acerto (cents) e volume da referência durante o canto
 
   // <synth>
@@ -426,7 +466,7 @@
     stream = null; source = null; phase = 'off';
     hideReport();
     $('micBtn').textContent = 'Iniciar microfone'; $('micBtn').className = 'primary';
-    $('msg').hidden = false; $('msg').textContent = 'Microfone parado. Toque em "Iniciar microfone" ou escolha um exercício.';
+    $('msg').hidden = false; $('msg').textContent = 'Microfone parado.';
     $('lvl').style.width = '0';
     dispM = null; shownNote = null; updateUI(performance.now(), true); drawStatic();
   }
@@ -470,10 +510,10 @@
     if (!(await ensureMic())) return;
     cancelExercise(true); hideReport();
     const bpm = +bpmSel.value; beatMs = 60000 / bpm;
-    seq = buildSeq(+rootSel.value, beatMs, EXERCISES[exSel.value]);
+    seq = buildSeq(+rootSel.value, beatMs, getEx(exSel.value));
     lastExId = exSel.value;
     buildProgressLabels();
-    samples = []; hist = []; recent = []; dispM = null; lastM = null;
+    samples = []; hist = []; recent = []; dispM = null; lastM = null; camC = null;
     runGain = audioCtx.createGain(); runGain.gain.value = 1; runGain.connect(master);
     guideG = audioCtx.createGain(); guideG.gain.value = 0.55; guideG.connect(runGain);
     const now = performance.now();
@@ -500,14 +540,14 @@
   function cancelExercise(silent) {
     if (runGain) { const g = runGain; try { g.gain.cancelScheduledValues(0); g.gain.value = 0; setTimeout(() => { try { g.disconnect(); } catch (e) {} }, 400); } catch (e) {} runGain = null; }
     if (inExercise()) phase = micOn ? 'free' : 'off';
-    seq = null; buildProgressLabels(); $('fill').style.width = '0';
+    seq = null; camC = null; buildProgressLabels(); $('fill').style.width = '0';
     if (!silent) setButtons();
   }
   function setButtons() {
     const busy = inExercise();
     $('exBtn').textContent = busy ? 'Cancelar' : 'Ouvir e cantar';
     $('exBtn').classList.toggle('cancel', busy);
-    $('singBtn').disabled = busy; $('singBtn').style.opacity = busy ? .4 : 1;
+    $('singBtn').disabled = busy;
   }
 
   function advance(now) {
@@ -553,7 +593,7 @@
     const tr = []; let lastT = -1e9;
     for (const p of traceRaw) if (p.tl - lastT >= 90) { tr.push([Math.round(p.tl), Math.round(p.m * 100) / 100]); lastT = p.tl; }
     return {
-      id: Date.now(), ex: exId, root: seq.notes[0].midi, bpm: Math.round(60000 / beatMs), tol: res.tol, syl,
+      id: Date.now(), ex: exId, name: getEx(exId).label, root: seq.notes[0].midi, bpm: Math.round(60000 / beatMs), tol: res.tol, syl,
       guide: guideChk.checked, total: res.total, dur: Math.round(seq.total),
       notes: res.rows.map(r => ({ midi: r.n.midi, s: Math.round(r.n.s), e: Math.round(r.n.e), score: Math.round(r.score * 100) / 100, med: r.med === null ? null : Math.round(r.med), status: r.status })),
       trace: tr,
@@ -583,8 +623,8 @@
       const k = 'afv-best-' + exId; best = +localStorage.getItem(k) || 0;
       if (total > best) { localStorage.setItem(k, String(total)); isNew = best > 0; }
     } catch (e) {}
-    const lo = rows[0].n.midi, hi = rows[rows.length - 1].n.midi;
-    $('repSub').textContent = EXERCISES[exId].label + ' · ' + noteFull(lo) + (hi !== lo ? ' a ' + noteFull(hi) : '') +
+    const mids = rows.map(r => r.n.midi), lo = Math.min(...mids), hi = Math.max(...mids);
+    $('repSub').textContent = rec.name + ' · ' + noteFull(lo) + (hi !== lo ? ' a ' + noteFull(hi) : '') +
       (isNew ? ' · novo recorde!' : (best ? ' · melhor: ' + Math.max(best, total) + '%' : ''));
     const box = $('repRows'); box.textContent = '';
     rows.forEach(r => {
@@ -602,7 +642,7 @@
       dev.appendChild(u);
       row.append(nm, st, dev); box.appendChild(row);
     });
-    $('report').hidden = false; $('report').scrollTop = 0;
+    $('report').hidden = false; $('repScroll').scrollTop = 0;
     drawMap($('repMap'), rec, true);
   }
   function hideReport() { $('report').hidden = true; }
@@ -652,6 +692,7 @@
   }
 
   function setPill(main, sub) {
+    $('pill').style.visibility = (main || sub) ? 'visible' : 'hidden';
     if ($('pillMain').textContent !== main) $('pillMain').textContent = main;
     if ($('pillSub').textContent !== sub) $('pillSub').textContent = sub;
   }
@@ -671,21 +712,21 @@
       $('noteBig').textContent = '–'; $('centsTxt').textContent = '–'; $('centsTxt').className = '';
       $('needle').style.left = '50%'; $('needle').className = '';
     }
-    if (off || phase === 'off') return setPill('Toque para começar', '');
-    if (phase === 'listen') return setPill('Ouça o exercício', '');
+    if (off || phase === 'off') return setPill('', '');
+    if (phase === 'listen') return setPill('Ouça', '');
     if (phase === 'count') {
       const left = Math.max(1, Math.ceil(-tl / beatMs)), name = noteName(seq.notes[0].midi);
-      return setPill(voiced ? judge(curCents) : 'Prepare-se', name + ' · em ' + left);
+      return setPill(voiced ? judge(curCents) : 'Prepare-se', name + ' · ' + left);
     }
     if (phase === 'sing') {
       const i = activeIndex(tl), name = noteName(seq.notes[i].midi), tag = name + ' · ' + (i + 1) + '/' + seq.notes.length;
-      return setPill(voiced ? judge(curCents) : 'Cante agora', tag);
+      return setPill(voiced ? judge(curCents) : 'Cante', tag);
     }
     if (voiced) return setPill(judge(curCents), noteFull(shownNote));
-    setPill('Cante ou murmure', '');
+    setPill('', '');
   }
 
-  // ---------- desenho ----------
+  // ---------- desenho do palco ----------
   function resize() {
     dpr = window.devicePixelRatio || 1;
     const r = stage.getBoundingClientRect(); W = r.width; H = r.height;
@@ -696,26 +737,37 @@
   new ResizeObserver(resize).observe(stage);
   function drawStatic() { draw(performance.now(), null); }
 
-  function rr(x, y, w, h, r) {
+  function rrOn(g, x, y, w, h, r) {
     r = Math.min(r, w / 2, h / 2);
-    ctx.beginPath(); ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+    g.beginPath(); g.moveTo(x + r, y);
+    g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
   }
 
   function draw(now, current) {
     ctx.clearRect(0, 0, W, H);
+    ctx.textAlign = 'left';
     const ex = inExercise() && seq;
-    let lo, hi, nowX, win;
+    let lo, nowX, win, scale;
     if (ex) {
-      const mn = Math.min(...seq.notes.map(n => n.midi)), mx = Math.max(...seq.notes.map(n => n.midi));
-      const span = Math.max(14, (mx - mn) + 5), c = (mn + mx) / 2;
-      lo = c - span / 2; hi = c + span / 2; nowX = W * 0.3; win = 8 * beatMs;
+      // retângulo com pelo menos ~26px de altura; se o exercício não couber, a câmera acompanha a nota atual
+      const mids = seq.notes.map(n => n.midi), mn = Math.min(...mids), mx = Math.max(...mids);
+      const minPx = 26 / (2 * TOL / 100), fit = (H - 28) / (mx - mn + 4);
+      scale = clamp(fit, minPx, minPx * 1.6);
+      const spanS = (H - 28) / scale;
+      const i = clamp(activeIndex(tl), 0, seq.notes.length - 1), nx = seq.notes[i + 1];
+      let tc = seq.notes[i].midi;
+      if (nx && Math.abs(nx.midi - tc) <= spanS - 3) tc = (tc + nx.midi) / 2;
+      if (mx - mn + 3 <= spanS) tc = (mn + mx) / 2;
+      camC = camC === null ? tc : camC + (tc - camC) * 0.07;
+      lo = camC - spanS / 2; nowX = W * 0.3; win = 8 * beatMs;
     } else {
+      scale = (H - 28) / 15;
       if (current !== null) center += (current - center) * 0.08;
-      lo = center - 7.5; hi = center + 7.5; nowX = W * 0.8; win = 6000;
+      lo = center - 7.5; nowX = W * 0.8; win = 6000;
     }
-    const yOf = m => H - 14 - ((m - lo) / (hi - lo)) * (H - 28);
+    const hi = lo + (H - 28) / scale;
+    const yOf = m => H - 14 - (m - lo) * scale;
     const targets = new Set(ex ? seq.notes.map(n => n.midi) : []);
 
     ctx.font = '700 10px Archivo, system-ui, sans-serif'; ctx.textBaseline = 'middle';
@@ -732,12 +784,12 @@
     if (ex) {
       ctx.setLineDash([4, 6]); ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(nowX, 0); ctx.lineTo(nowX, H); ctx.stroke(); ctx.setLineDash([]);
-      const half = TOL / 100;
       ctx.save(); ctx.beginPath(); ctx.rect(42, 0, W - 42, H); ctx.clip();
       seq.notes.forEach((n, idx) => {
         const x1 = nowX + (n.s - tl) / win * W, x2 = nowX + (n.e - tl) / win * W - 5;
         if (x2 < 42 || x1 > W || x2 - x1 < 6) return;
-        const yC = yOf(n.midi), h = Math.max(10, yOf(n.midi - half) - yOf(n.midi + half)), y = yC - h / 2;
+        const yC = yOf(n.midi), h = 2 * (TOL / 100) * scale, y = yC - h / 2;
+        if (y + h < 0 || y > H) return;
         const act = (tl >= n.s && tl < n.e) || (tl < 0 && idx === 0), past = tl >= n.e;
         const inside = act && current !== null && Math.abs(current - n.midi) * 100 <= TOL;
         let fill, stroke, lw = 2, glow = 0;
@@ -746,13 +798,18 @@
         else if (inside) { fill = 'rgba(93,255,138,.38)'; stroke = '#5dff8a'; glow = 14; }
         else if (act) { fill = 'rgba(93,255,138,.14)'; stroke = 'rgba(93,255,138,.9)'; }
         else { fill = 'rgba(93,255,138,.10)'; stroke = 'rgba(93,255,138,.5)'; lw = 1.5; }
-        rr(x1, y, x2 - x1, h, 9);
+        rrOn(ctx, x1, y, x2 - x1, h, 5);
         ctx.fillStyle = fill; ctx.fill();
         ctx.strokeStyle = stroke; ctx.lineWidth = lw;
         ctx.shadowColor = 'rgba(93,255,138,.8)'; ctx.shadowBlur = glow; ctx.stroke(); ctx.shadowBlur = 0;
+        const labelOn = x2 - x1 > 54, lx = Math.max(x1, 42);
+        if (labelOn) {
+          ctx.fillStyle = 'rgba(234,243,252,.85)'; ctx.font = '800 10px Archivo, system-ui, sans-serif'; ctx.textBaseline = 'middle';
+          ctx.fillText(noteName(n.midi).toUpperCase(), lx + 8, yC);
+        }
         if (!past && x2 - x1 > 28) {
           ctx.strokeStyle = inside ? 'rgba(255,255,255,.6)' : 'rgba(93,255,138,.35)'; ctx.lineWidth = 1;
-          ctx.beginPath(); ctx.moveTo(x1 + 10, yC); ctx.lineTo(x2 - 10, yC); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(lx + (labelOn ? 40 : 10), yC); ctx.lineTo(x2 - 10, yC); ctx.stroke();
         }
       });
       ctx.restore();
@@ -787,18 +844,13 @@
     }
   }
 
-  // ---------- mapa e histórico ----------
-  const HKEY = 'afv-history-v1';
-  const SYL_NAME = { la: 'LÁ', vi: 'VI', ta: 'TÁ', mm: 'MMM', bip: 'BIP' };
-
-  function rrOn(g, x, y, w, h, r) {
-    r = Math.min(r, w / 2, h / 2);
-    g.beginPath(); g.moveTo(x + r, y);
-    g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
-    g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
-  }
-
-  function setupCanvas(c) {
+  // ---------- mapa de acertos ----------
+  function setupCanvas(c, size) {
+    if (size) {
+      c.width = size.w; c.height = size.h;
+      const g = c.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, size.w, size.h);
+      return { g, w: size.w, h: size.h };
+    }
     const r = c.getBoundingClientRect(), w = r.width, h = r.height;
     if (!w || !h) return null;
     const d = window.devicePixelRatio || 1;
@@ -807,27 +859,27 @@
     return { g, w, h };
   }
 
-  // mapa: um retângulo por nota (altura = margem de acerto), colorido pela nota, com o traço da voz por cima
-  function drawMap(c, rec, labels) {
-    const k = setupCanvas(c); if (!k) return;
-    const { g, w, h } = k, padX = 10, padY = 12;
+  // um retângulo por nota (altura = margem de acerto), colorido pela nota, com o traço da voz por cima
+  function drawMap(c, rec, labels, size) {
+    const k = setupCanvas(c, size); if (!k) return;
+    const { g, w, h } = k, big = !!size, padX = big ? 18 : 10, padY = big ? 26 : 14;
     const mids = rec.notes.map(n => n.midi), mn = Math.min(...mids), mx = Math.max(...mids);
     const span = Math.max(6, mx - mn + 3), cc = (mn + mx) / 2, lo = cc - span / 2, hi = cc + span / 2;
     const X = t => padX + t / rec.dur * (w - 2 * padX);
     const Y = m => h - padY - (m - lo) / (hi - lo) * (h - 2 * padY);
-    const half = rec.tol / 100;
+    const half = rec.tol / 100, minH = big ? 24 : 14;
     g.save(); g.beginPath(); g.rect(0, 0, w, h); g.clip();
     rec.notes.forEach(n => {
-      const x1 = X(n.s) + 1.5, x2 = X(n.e) - 1.5, hh = Math.max(8, Y(n.midi - half) - Y(n.midi + half));
+      const x1 = X(n.s) + 1.5, x2 = X(n.e) - 1.5, hh = Math.max(minH, Y(n.midi - half) - Y(n.midi + half));
       const col = C[gradeOf(n)];
-      rrOn(g, x1, Y(n.midi) - hh / 2, x2 - x1, hh, 7);
-      g.fillStyle = col + '4d'; g.fill(); g.strokeStyle = col; g.lineWidth = 1.5; g.stroke();
-      if (labels && x2 - x1 > 22) {
-        g.fillStyle = 'rgba(234,243,252,.9)'; g.font = '800 10px Archivo, system-ui, sans-serif';
-        g.textAlign = 'center'; g.textBaseline = 'bottom'; g.fillText(noteName(n.midi), (x1 + x2) / 2, Y(n.midi) - hh / 2 - 3);
+      rrOn(g, x1, Y(n.midi) - hh / 2, x2 - x1, hh, big ? 6 : 4);
+      g.fillStyle = col + '4d'; g.fill(); g.strokeStyle = col; g.lineWidth = big ? 2.2 : 1.5; g.stroke();
+      if (labels && x2 - x1 > (big ? 34 : 22)) {
+        g.fillStyle = 'rgba(234,243,252,.9)'; g.font = '800 ' + (big ? 15 : 10) + 'px Archivo, system-ui, sans-serif';
+        g.textAlign = 'center'; g.textBaseline = 'bottom'; g.fillText(noteName(n.midi), (x1 + x2) / 2, Y(n.midi) - hh / 2 - (big ? 5 : 3));
       }
     });
-    g.strokeStyle = 'rgba(234,243,252,.85)'; g.lineWidth = labels ? 1.6 : 1.3; g.lineJoin = 'round'; g.lineCap = 'round';
+    g.strokeStyle = 'rgba(234,243,252,.85)'; g.lineWidth = big ? 2.4 : 1.4; g.lineJoin = 'round'; g.lineCap = 'round';
     g.beginPath();
     let pt = null;
     for (const [t, m] of rec.trace) {
@@ -838,18 +890,24 @@
     g.stroke(); g.restore();
   }
 
+  // ---------- histórico ----------
+  const HKEY = 'afv-history-v1', CKEY = 'afv-custom-v1', SKEY = 'afv-settings-v1', HMAX = 200;
+
   function loadHistory() {
     try {
       const v = JSON.parse(localStorage.getItem(HKEY) || '[]');
-      return Array.isArray(v) ? v.filter(r => r && Array.isArray(r.notes) && r.notes.length && r.dur > 0).sort((a, b) => a.id - b.id) : [];
+      return Array.isArray(v) ? v.filter(r => r && Array.isArray(r.notes) && r.notes.length && r.dur > 0 && Number.isFinite(r.id)).sort((a, b) => a.id - b.id) : [];
     } catch (e) { return []; }
   }
-  function writeHistory(list) { try { localStorage.setItem(HKEY, JSON.stringify(list.slice(-80))); return true; } catch (e) { return false; } }
+  function writeHistory(list) { try { localStorage.setItem(HKEY, JSON.stringify(list.slice(-HMAX))); return true; } catch (e) { return false; } }
   function saveRecord(rec) {
     const list = loadHistory();
     if (list.some(r => r.id === rec.id)) return true;
     list.push(rec); return writeHistory(list);
   }
+  const recTitle = r => (r.name || (EXERCISES[r.ex] ? EXERCISES[r.ex].label : r.ex)) + ' · ' + noteFull(r.root);
+  const recMeta = r => new Date(r.id).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) +
+    ' · ' + r.bpm + ' bpm · ±' + r.tol + '¢ · ' + (SYL_NAME[r.syl] || r.syl) + (r.guide ? ' · com guia' : '');
 
   function drawSpark(list) {
     const c = $('spark'); c.hidden = list.length < 2; if (c.hidden) return;
@@ -876,7 +934,10 @@
     sel.textContent = '';
     const add = (v, t) => { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o); };
     add('all', 'Todos os exercícios');
-    Object.keys(EXERCISES).forEach(id => { if (all.some(r => r.ex === id)) add(id, EXERCISES[id].label); });
+    const seen = new Map();
+    all.forEach(r => { if (!seen.has(r.ex)) seen.set(r.ex, r.name || (EXERCISES[r.ex] && EXERCISES[r.ex].label) || r.ex); });
+    Object.keys(EXERCISES).forEach(id => { if (seen.has(id)) add(id, seen.get(id)); });
+    seen.forEach((name, id) => { if (!EXERCISES[id]) add(id, name); });
     sel.value = [...sel.options].some(o => o.value === cur) ? cur : 'all';
   }
 
@@ -888,6 +949,7 @@
     const stats = $('hStats'); stats.textContent = '';
     const stat = (label, val) => { const sp = document.createElement('span'); sp.append(label + ' '); const b = document.createElement('b'); b.textContent = val; sp.appendChild(b); stats.appendChild(sp); };
     const box = $('hList'); box.textContent = '';
+    $('hExport').disabled = !all.length && !customs.length;
     if (!list.length) {
       const e = document.createElement('div'); e.className = 'h-empty';
       e.textContent = 'Nenhuma tentativa salva ainda. Termine um exercício e toque em "Salvar resultado".';
@@ -901,11 +963,8 @@
       const it = document.createElement('div'); it.className = 'h-item';
       const head = document.createElement('div'); head.className = 'h-head';
       const left = document.createElement('div');
-      const t = document.createElement('div'); t.className = 'h-title';
-      t.textContent = (EXERCISES[r.ex] ? EXERCISES[r.ex].label : r.ex) + ' · ' + noteFull(r.root);
-      const meta = document.createElement('div'); meta.className = 'h-meta';
-      meta.textContent = new Date(r.id).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) +
-        ' · ' + r.bpm + ' bpm · ±' + r.tol + '¢ · ' + (SYL_NAME[r.syl] || r.syl) + (r.guide ? ' · com guia' : '');
+      const t = document.createElement('div'); t.className = 'h-title'; t.textContent = recTitle(r);
+      const meta = document.createElement('div'); meta.className = 'h-meta'; meta.textContent = recMeta(r);
       left.append(t, meta);
       const sc = document.createElement('div'); sc.className = 'h-score'; sc.textContent = r.total + '%';
       const d = delta[r.id];
@@ -913,53 +972,247 @@
       head.append(left, sc);
       const cv2 = document.createElement('canvas'); cv2.className = 'map'; cv2.setAttribute('aria-label', 'Mapa da tentativa');
       const foot = document.createElement('div'); foot.className = 'h-foot';
+      const img = document.createElement('button'); img.type = 'button'; img.className = 'ghost'; img.textContent = 'Baixar imagem';
+      img.addEventListener('click', () => exportImage(r));
       const del = document.createElement('button'); del.type = 'button'; del.className = 'ghost'; del.textContent = 'Excluir';
       del.addEventListener('click', () => {
         if (del.dataset.arm) { writeHistory(loadHistory().filter(x => x.id !== r.id)); buildFilter(); renderHistory(); return; }
         del.dataset.arm = '1'; del.textContent = 'Confirmar exclusão';
         setTimeout(() => { if (del.isConnected) { del.textContent = 'Excluir'; delete del.dataset.arm; } }, 3000);
       });
-      foot.appendChild(del);
+      foot.append(img, del);
       it.append(head, cv2, foot); box.appendChild(it); pairs.push([cv2, r]);
     });
     pairs.forEach(([c, r]) => drawMap(c, r, true));
     drawSpark(list);
   }
-  function openHistory() { $('history').hidden = false; buildFilter(); renderHistory(); $('history').scrollTop = 0; }
+  function openHistory() {
+    if (inExercise()) cancelExercise(false);
+    $('hMsg').textContent = '';
+    $('history').hidden = false; buildFilter(); renderHistory(); $('history').scrollTop = 0;
+  }
   function closeHistory() { $('history').hidden = true; }
+
+  // ---------- exportar / importar ----------
+  function downloadBlob(blob, name) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }
+  const stamp = () => new Date().toISOString().slice(0, 10);
+
+  function exportHistory() {
+    const data = { app: 'afinador-vocal', version: 1, exportedAt: new Date().toISOString(), history: loadHistory(), custom: customs };
+    downloadBlob(new Blob([JSON.stringify(data)], { type: 'application/json' }), 'afinador-historico-' + stamp() + '.json');
+    $('hMsg').textContent = 'Arquivo exportado: ' + data.history.length + ' tentativas e ' + customs.length + ' exercícios seus.';
+  }
+
+  async function importHistory(file) {
+    try {
+      const data = JSON.parse(await file.text());
+      if (!data || data.app !== 'afinador-vocal') throw new Error('formato');
+      const have = loadHistory(), ids = new Set(have.map(r => r.id));
+      const incoming = (Array.isArray(data.history) ? data.history : []).filter(r => r && Array.isArray(r.notes) && r.notes.length && r.dur > 0 && Number.isFinite(r.id) && !ids.has(r.id));
+      const merged = have.concat(incoming).sort((a, b) => a.id - b.id);
+      let newCustom = 0;
+      (Array.isArray(data.custom) ? data.custom : []).forEach(c => {
+        if (c && typeof c.id === 'string' && typeof c.name === 'string' && Array.isArray(c.notes) && c.notes.length && !customs.some(x => x.id === c.id)) {
+          customs.push({ id: c.id, name: c.name.slice(0, 40), notes: c.notes.map(n => [clamp(+n[0] || 0, -12, 19), clamp(+n[1] || 1, 1, 8)]).slice(0, 24) }); newCustom++;
+        }
+      });
+      if (newCustom) { saveCustoms(); rebuildExSelect(); updateSummary(); }
+      if (!writeHistory(merged)) throw new Error('espaço');
+      buildFilter(); renderHistory();
+      $('hMsg').textContent = 'Importadas ' + incoming.length + ' tentativas' + (newCustom ? ' e ' + newCustom + ' exercícios.' : '.');
+    } catch (e) {
+      $('hMsg').textContent = 'Não consegui importar este arquivo. Use um arquivo exportado por este app.';
+    }
+    $('hFile').value = '';
+  }
+
+  function exportImage(rec) {
+    const w = 900, mh = 300, head = 112, foot = 60, pad = 28, F = 'Archivo, system-ui, sans-serif';
+    const mp = document.createElement('canvas'); drawMap(mp, rec, true, { w, h: mh });
+    const out = document.createElement('canvas'); out.width = w; out.height = head + mh + foot;
+    const g = out.getContext('2d');
+    g.fillStyle = '#0a1a2c'; g.fillRect(0, 0, w, out.height);
+    g.textBaseline = 'top'; g.textAlign = 'left';
+    g.fillStyle = '#eaf3fc'; g.font = '800 32px ' + F; g.fillText(recTitle(rec), pad, 24);
+    g.fillStyle = '#7f9bb8'; g.font = '600 20px ' + F; g.fillText(recMeta(rec), pad, 68);
+    g.textAlign = 'right'; g.fillStyle = C[gradeOf({ score: rec.total / 100, status: 'x' })]; g.font = '900 56px ' + F; g.fillText(rec.total + '%', w - pad, 20);
+    g.fillStyle = 'rgba(255,255,255,.04)'; g.fillRect(0, head, w, mh); g.drawImage(mp, 0, head);
+    g.textAlign = 'left'; g.font = '700 16px ' + F;
+    let x = pad; const y = head + mh + 22;
+    [['Boa 70%+', C.good], ['Média 40%+', C.mid], ['Errou', C.bad], ['Sem som', C.none]].forEach(([t, col]) => {
+      g.fillStyle = col; rrOn(g, x, y + 2, 14, 14, 3); g.fill();
+      g.fillStyle = '#7f9bb8'; g.fillText(t, x + 22, y); x += 22 + g.measureText(t).width + 26;
+    });
+    out.toBlob(b => { if (b) downloadBlob(b, 'mapa-afinador-' + new Date(rec.id).toISOString().slice(0, 10) + '.png'); }, 'image/png');
+  }
+
+  // ---------- exercícios próprios ----------
+  function loadCustoms() {
+    try {
+      const v = JSON.parse(localStorage.getItem(CKEY) || '[]');
+      customs = Array.isArray(v) ? v.filter(c => c && typeof c.id === 'string' && typeof c.name === 'string' && Array.isArray(c.notes) && c.notes.length) : [];
+    } catch (e) { customs = []; }
+  }
+  function saveCustoms() { try { localStorage.setItem(CKEY, JSON.stringify(customs)); } catch (e) {} }
+
+  function rebuildExSelect(keep) {
+    const cur = keep || exSel.value || 'arpejo';
+    exSel.textContent = '';
+    Object.keys(EXERCISES).forEach(id => { const o = document.createElement('option'); o.value = id; o.textContent = EXERCISES[id].opt; exSel.appendChild(o); });
+    if (customs.length) {
+      const og = document.createElement('optgroup'); og.label = 'Meus exercícios';
+      customs.forEach(c => { const o = document.createElement('option'); o.value = c.id; o.textContent = c.name; og.appendChild(o); });
+      exSel.appendChild(og);
+    }
+    exSel.value = [...exSel.options].some(o => o.value === cur) ? cur : 'arpejo';
+  }
+
+  const IVL = ['tônica','2ª menor','2ª maior','3ª menor','3ª maior','4ª justa','trítono','5ª justa','6ª menor','6ª maior','7ª menor','7ª maior'];
+  function ivlName(o) {
+    const a = Math.abs(o);
+    if (o === 0) return 'tônica';
+    if (a === 12) return o < 0 ? 'oitava abaixo' : 'oitava';
+    return IVL[a % 12] + (a > 12 ? ' + oitava' : '') + (o < 0 ? ' abaixo' : '');
+  }
+  const offLabel = o => noteFull(+rootSel.value + o) + ' · ' + ivlName(o);
+
+  let edId = null, edSteps = [];
+  function renderEdInfo() {
+    const tot = edSteps.reduce((a, s) => a + s.beats, 0);
+    $('edInfo').textContent = edSteps.length + (edSteps.length === 1 ? ' nota · ' : ' notas · ') + tot + ' tempos · cerca de ' + Math.round(tot * 60 / +bpmSel.value) + ' s no andamento atual';
+  }
+  function renderEditor() {
+    $('edCap').textContent = 'Notas, a partir de ' + noteFull(+rootSel.value) + ' (tom inicial)';
+    const box = $('edSteps'); box.textContent = '';
+    edSteps.forEach((st, i) => {
+      const row = document.createElement('div'); row.className = 'ed-row';
+      const num = document.createElement('div'); num.className = 'ed-n'; num.textContent = String(i + 1);
+      const so = document.createElement('select'); so.setAttribute('aria-label', 'Nota ' + (i + 1));
+      for (let o = -12; o <= 19; o++) { const op = document.createElement('option'); op.value = String(o); op.textContent = offLabel(o); so.appendChild(op); }
+      so.value = String(st.off); so.addEventListener('change', () => { st.off = +so.value; });
+      const sb = document.createElement('select'); sb.setAttribute('aria-label', 'Duração da nota ' + (i + 1));
+      [1, 2, 3, 4].forEach(b => { const op = document.createElement('option'); op.value = String(b); op.textContent = b + (b === 1 ? ' tempo' : ' tempos'); sb.appendChild(op); });
+      sb.value = String(st.beats); sb.addEventListener('change', () => { st.beats = +sb.value; renderEdInfo(); });
+      const x = document.createElement('button'); x.type = 'button'; x.className = 'ghost'; x.textContent = '✕'; x.setAttribute('aria-label', 'Remover nota ' + (i + 1));
+      x.disabled = edSteps.length <= 1; x.addEventListener('click', () => { edSteps.splice(i, 1); renderEditor(); });
+      row.append(num, so, sb, x); box.appendChild(row);
+    });
+    $('edAdd').disabled = edSteps.length >= 24;
+    renderEdInfo();
+  }
+  function openEditor(id) {
+    edId = id || null;
+    const c = id ? customs.find(x => x.id === id) : null;
+    $('edName').value = c ? c.name : '';
+    edSteps = c ? c.notes.map(([off, beats]) => ({ off, beats })) : [{ off: 0, beats: 2 }, { off: 7, beats: 2 }];
+    $('edDel').hidden = !c; $('edDel').textContent = 'Excluir exercício'; delete $('edDel').dataset.arm;
+    renderEditor(); $('editor').hidden = false; $('editor').scrollTop = 0;
+  }
+  async function edPreview() {
+    await ensureAudio();
+    const bms = 60000 / +bpmSel.value;
+    muteUntil = performance.now() + edSteps.reduce((a, s) => a + s.beats, 0) * bms + 400;
+    let t = audioCtx.currentTime + 0.1;
+    edSteps.forEach(st => { const d = st.beats * bms / 1000; synthNote(audioCtx, master, +rootSel.value + st.off, t, d - 0.03, syl); t += d; });
+  }
+  function edSave() {
+    const name = $('edName').value.trim() || 'Meu exercício ' + (customs.length + (edId ? 0 : 1));
+    const notes = edSteps.map(s => [s.off, s.beats]);
+    let id = edId;
+    if (id) { const c = customs.find(x => x.id === id); c.name = name; c.notes = notes; }
+    else { id = 'c' + Date.now().toString(36); customs.push({ id, name, notes }); }
+    saveCustoms(); rebuildExSelect(id); updateSummary(); saveSettings();
+    $('editor').hidden = true;
+  }
+  function edDelete() {
+    const del = $('edDel');
+    if (!del.dataset.arm) {
+      del.dataset.arm = '1'; del.textContent = 'Confirmar exclusão';
+      setTimeout(() => { if (del.isConnected && !$('editor').hidden) { del.textContent = 'Excluir exercício'; delete del.dataset.arm; } }, 3000);
+      return;
+    }
+    customs = customs.filter(c => c.id !== edId); saveCustoms();
+    rebuildExSelect('arpejo'); updateSummary(); saveSettings();
+    $('editor').hidden = true;
+  }
+
+  // ---------- ajustes ----------
+  function applyTol() { TOL = +tolSel.value; document.documentElement.style.setProperty('--tol', String(TOL)); }
+  function setSyl(k) {
+    syl = SYL_NAME[k] ? k : 'la';
+    [...$('chips').children].forEach(x => x.setAttribute('aria-pressed', x.dataset.syl === syl ? 'true' : 'false'));
+    $('vowel').textContent = SYL_NAME[syl];
+  }
+  function updateSummary() {
+    $('sumTxt').textContent = getEx(exSel.value).label + ' · ' + noteFull(+rootSel.value) + ' · ' + bpmSel.value + ' bpm · ' + SYL_NAME[syl];
+    $('exEdit').hidden = !customs.some(c => c.id === exSel.value);
+  }
+  function saveSettings() {
+    try { localStorage.setItem(SKEY, JSON.stringify({ ex: exSel.value, root: rootSel.value, bpm: bpmSel.value, tol: tolSel.value, sens: sensSel.value, syl, guide: guideChk.checked, anyO: anyOct.checked })); } catch (e) {}
+  }
+  function loadSettings() {
+    try {
+      const v = JSON.parse(localStorage.getItem(SKEY) || 'null'); if (!v) return;
+      const setSel = (sel, val) => { if (val != null && [...sel.options].some(o => o.value === String(val))) sel.value = String(val); };
+      setSel(exSel, v.ex); setSel(rootSel, v.root); setSel(bpmSel, v.bpm); setSel(tolSel, v.tol); setSel(sensSel, v.sens);
+      if (v.syl) setSyl(v.syl);
+      guideChk.checked = !!v.guide; anyOct.checked = v.anyO !== false;
+    } catch (e) {}
+  }
+  function onSetting() { applyTol(); updateSummary(); saveSettings(); }
+  function openSheet() { if (inExercise()) cancelExercise(false); updateSummary(); $('sheet').hidden = false; $('sheet').scrollTop = 0; }
 
   // ---------- eventos ----------
   $('micBtn').addEventListener('click', () => micOn ? stopMic() : ensureMic());
   $('exBtn').addEventListener('click', () => inExercise() ? cancelExercise(false) : runExercise(true));
   $('singBtn').addEventListener('click', () => { if (!inExercise()) runExercise(false); });
   $('noteBtn').addEventListener('click', previewNote);
-  const applyTol = () => { TOL = +tolSel.value; document.documentElement.style.setProperty('--tol', String(TOL)); };
-  tolSel.addEventListener('change', applyTol); applyTol();
-  $('rAgain').addEventListener('click', () => runExercise(false));
-  $('rReplay').addEventListener('click', () => runExercise(true));
-  $('rClose').addEventListener('click', hideReport);
-  $('rUp').addEventListener('click', () => {
-    const i = rootSel.selectedIndex; if (i < rootSel.options.length - 1) rootSel.selectedIndex = i + 1;
-    runExercise(true);
+  $('summary').addEventListener('click', openSheet);
+  $('shClose').addEventListener('click', () => { $('sheet').hidden = true; });
+  [exSel, rootSel, bpmSel, tolSel, sensSel, guideChk, anyOct].forEach(el => el.addEventListener('change', onSetting));
+  $('chips').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; setSyl(b.dataset.syl); onSetting(); });
+
+  $('exNew').addEventListener('click', () => openEditor(null));
+  $('exEdit').addEventListener('click', () => openEditor(exSel.value));
+  $('edCancel').addEventListener('click', () => { $('editor').hidden = true; });
+  $('edAdd').addEventListener('click', () => {
+    const last = edSteps[edSteps.length - 1] || { off: 0, beats: 2 };
+    edSteps.push({ off: last.off, beats: last.beats }); renderEditor();
+    const rows = $('edSteps').lastElementChild; if (rows) rows.scrollIntoView({ block: 'nearest' });
   });
-  $('chips').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return;
-    [...$('chips').children].forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
-    syl = b.dataset.syl; $('vowel').textContent = b.textContent;
-    $('kicker').textContent = syl === 'mm' ? 'MURMURE' : syl === 'bip' ? 'ACOMPANHE O BIP' : 'CANTE NA SÍLABA';
-  });
+  $('edPlay').addEventListener('click', edPreview);
+  $('edSave').addEventListener('click', edSave);
+  $('edDel').addEventListener('click', edDelete);
+
   $('rSave').addEventListener('click', () => {
     if (!currentRec) return;
     const ok = saveRecord(currentRec);
     $('rSave').textContent = ok ? 'Salvo ✓' : 'Não consegui salvar'; $('rSave').disabled = ok;
   });
+  $('rAgain').addEventListener('click', () => runExercise(false));
+  $('rReplay').addEventListener('click', () => runExercise(true));
+  $('rClose').addEventListener('click', hideReport);
+  $('rUp').addEventListener('click', () => {
+    const i = rootSel.selectedIndex; if (i < rootSel.options.length - 1) rootSel.selectedIndex = i + 1;
+    onSetting(); runExercise(true);
+  });
+
   $('histBtn').addEventListener('click', openHistory);
   $('hClose').addEventListener('click', closeHistory);
   $('hFilter').addEventListener('change', renderHistory);
+  $('hExport').addEventListener('click', exportHistory);
+  $('hImport').addEventListener('click', () => $('hFile').click());
+  $('hFile').addEventListener('change', () => { const f = $('hFile').files[0]; if (f) importHistory(f); });
   window.addEventListener('resize', () => {
     if (!$('history').hidden) renderHistory();
     if (!$('report').hidden && currentRec) drawMap($('repMap'), currentRec, true);
   });
+
+  loadCustoms(); rebuildExSelect('arpejo'); setSyl('la'); loadSettings(); applyTol(); updateSummary();
   resize(); updateUI(performance.now(), true);
 })();
 </script>
